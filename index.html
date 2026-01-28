@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hip-Hop男模會館</title>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont;
+  background:#eaf6ff;
+  text-align:center;
+}
+
+/* ===== 本命選擇 ===== */
+#biasSelect{
+  position:fixed;
+  inset:0;
+  background:#eaf6ff;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+}
+.bias-options{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+  margin-top:20px;
+}
+.bias-options button{
+  padding:14px;
+  border:none;
+  border-radius:22px;
+  background:#111;
+  color:#fff;
+  font-size:16px;
+}
+
+/* ===== 抽卡結果 ===== */
+#result{
+  display:flex;
+  justify-content:center;
+  margin-top:30px;
+}
+.result-wrapper{
+  width:90%;
+  max-width:360px;
+  background:#fff;
+  border-radius:26px;
+  padding:22px 18px 26px;
+  box-shadow:0 14px 34px rgba(0,0,0,.12);
+  animation:floatIn .4s ease-out;
+}
+.result-text{
+  font-size:16px;
+  margin-bottom:16px;
+  color:#333;
+  line-height:1.4;
+}
+.result-card img{
+  width:100%;
+  border-radius:20px;
+  display:block;
+}
+@keyframes floatIn{
+  from{transform:translateY(10px);opacity:0;}
+  to{transform:translateY(0);opacity:1;}
+}
+
+/* ===== 粉色抽卡按鈕 ===== */
+.next-btn{
+  margin:26px auto 10px;
+  width:90%;
+  max-width:360px;
+  padding:14px 0;
+  border:none;
+  border-radius:30px;
+  background:#ff9ad5;
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
+}
+
+/* ===== 卡池 ===== */
+#pool{
+  margin-top:20px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:10px;
+  margin:10px;
+}
+.pool-card{
+  aspect-ratio:2/3;
+  perspective:800px;
+}
+.pool-inner{
+  width:100%;
+  height:100%;
+  transition:.6s;
+  transform-style:preserve-3d;
+}
+.pool-card.open .pool-inner{
+  transform:rotateY(180deg);
+}
+.pool-front,
+.pool-back{
+  position:absolute;
+  inset:0;
+  border-radius:8px;
+  backface-visibility:hidden;
+}
+.pool-front{
+  background:linear-gradient(135deg,#7cc7ff,#ff9ad5);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:28px;
+}
+.pool-back{
+  transform:rotateY(180deg);
+}
+.pool-back img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+/* ===== 撒花 ===== */
+.confetti{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+}
+.confetti span{
+  position:absolute;
+  width:8px;
+  height:8px;
+  background:hsl(var(--h),80%,70%);
+  opacity:.35;
+  animation:fall 1.2s linear forwards;
+}
+@keyframes fall{
+  from{transform:translateY(-10px);}
+  to{transform:translateY(110vh);opacity:0;}
+}
+</style>
+</head>
+
+<body>
+
+<!-- 本命選擇 -->
+<div id="biasSelect">
+  <h2>請選擇你的本命</h2>
+  <div class="bias-options">
+    <button data-bias="S.COUPS">S.COUPS</button>
+    <button data-bias="WONWOO">WONWOO</button>
+    <button data-bias="MINGYU">MINGYU</button>
+    <button data-bias="VERNON">VERNON</button>
+  </div>
+</div>
+
+<h1>Hip-Hop男模會館</h1>
+<div>
+  今日剩餘抽卡：<span id="chance">2</span><br>
+  剩餘卡片：<span id="remain">16</span>
+</div>
+
+<div id="result"></div>
+
+<button id="drawBtn" class="next-btn">下一位男模是誰呢？ ✨</button>
+
+<div id="pool">
+  <h2>卡池</h2>
+  <div class="grid" id="poolGrid"></div>
+</div>
+
+<div class="confetti" id="confetti"></div>
+
+<audio id="drawSound" src="sounds/ScreenRecording_01-26-2026 13-18-42_1-2.m4a"></audio>
+<audio id="biasSound" src="sounds/bias.mp3"></audio>
+
+<script>
+const cards = [
+{id:1,member:"S.COUPS",text:"隊長在，世界就不會亂",img:"images/88A0FA78-0A86-4215-911D-75C3089D1B87.jpeg"},
+{id:2,member:"S.COUPS",text:"氣場就是實力",img:"images/IMG_3440.jpeg"},
+{id:3,member:"S.COUPS",text:"你站在這裡，本身就是答案",img:"images/IMG_3769.jpeg"},
+{id:4,member:"S.COUPS",text:"被守護的感覺",img:"images/IMG_3439.jpeg"},
+{id:5,member:"WONWOO",text:"沉默本身就是攻擊",img:"images/IMG_3766.jpeg"},
+{id:6,member:"WONWOO",text:"低調到讓人上癮",img:"images/IMG_3767.jpeg"},
+{id:7,member:"WONWOO",text:"眼神比話還多",img:"images/IMG_3768.jpeg"},
+{id:8,member:"WONWOO",text:"靜靜地擊中你",img:"images/IMG_3763.jpeg"},
+{id:9,member:"MINGYU",text:"一秒被抓住視線",img:"images/5H2A3818.jpeg"},
+{id:10,member:"MINGYU",text:"存在感犯規",img:"images/5H2A4225.jpeg"},
+{id:11,member:"MINGYU",text:"這就是心動",img:"images/IMG_3557.jpeg"},
+{id:12,member:"MINGYU",text:"靠近就逃不掉",img:"images/IMG_3765.jpeg"},
+{id:13,member:"VERNON",text:"世界只有你這個版本",img:"images/IMG_3773.jpeg"},
+{id:14,member:"VERNON",text:"不需要被定義",img:"images/IMG_3772.jpeg"},
+{id:15,member:"VERNON",text:"自由又危險",img:"images/IMG_3771.jpeg"},
+{id:16,member:"VERNON",text:"你就是風格本身",img:"images/IMG_3774.jpeg"}
+];
+
+const today = new Date().toDateString();
+let data = JSON.parse(localStorage.getItem("svtCard")) || {date:today,chance:2,owned:[]};
+if(data.date!==today) data={date:today,chance:2,owned:[]};
+
+let MY_BIAS = localStorage.getItem("myBias");
+const biasScreen=document.getElementById("biasSelect");
+if(MY_BIAS) biasScreen.style.display="none";
+
+document.querySelectorAll(".bias-options button").forEach(b=>{
+  b.onclick=()=>{
+    MY_BIAS=b.dataset.bias;
+    localStorage.setItem("myBias",MY_BIAS);
+    biasScreen.style.display="none";
+  };
+});
+
+const drawSound=document.getElementById("drawSound");
+const biasSound=document.getElementById("biasSound");
+
+function drawCard(){
+  if(data.chance<=0) return alert("今天抽完了！");
+  const pool=cards.filter(c=>!data.owned.includes(c.id));
+  if(pool.length===0) return alert("已集滿全部卡片！");
+  const card=pool[Math.floor(Math.random()*pool.length)];
+  data.owned.push(card.id);
+  data.chance--;
+  localStorage.setItem("svtCard",JSON.stringify(data));
+
+  drawSound.currentTime=0;
+  drawSound.play();
+  showResult(card);
+  updateUI();
+  confetti();
+}
+
+function showResult(card){
+  document.getElementById("result").innerHTML=`
+    <div class="result-wrapper">
+      <div class="result-text">${card.text}</div>
+      <div class="result-card"><img src="${card.img}"></div>
+    </div>
+  `;
+}
+
+function updateUI(){
+  document.getElementById("chance").textContent=data.chance;
+  document.getElementById("remain").textContent=16-data.owned.length;
+  updatePool();
+}
+
+function updatePool(){
+  const g=document.getElementById("poolGrid");
+  g.innerHTML="";
+  cards.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="pool-card"+(data.owned.includes(c.id)?" open":"");
+    d.innerHTML=`
+      <div class="pool-inner">
+        <div class="pool-front">◆</div>
+        <div class="pool-back"><img src="${c.img}"></div>
+      </div>`;
+    g.appendChild(d);
+  });
+}
+
+function confetti(){
+  const box=document.getElementById("confetti");
+  for(let i=0;i<40;i++){
+    const s=document.createElement("span");
+    s.style.left=Math.random()*100+"vw";
+    s.style.setProperty("--h",Math.random()*360);
+    box.appendChild(s);
+    setTimeout(()=>s.remove(),1200);
+  }
+}
+
+document.getElementById("drawBtn").onclick=drawCard;
+updateUI();
+</script>
+
+</body>
+</html>
